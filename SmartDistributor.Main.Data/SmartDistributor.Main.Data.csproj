@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmartDistributor.Main.Dto\SmartDistributor.Main.Dto.csproj" />
+    <ProjectReference Include="..\SmartDistributor.Main.Idata\SmartDistributor.Main.Idata.csproj" />
+    <ProjectReference Include="..\SmartDistributor.SharedKernel\SmartDistributor.SharedKernel.csproj" />
+    <ProjectReference Include="..\SmartDistributor.SqlServer\SmartDistributor.SqlServer.csproj" />
+  </ItemGroup>
+
+</Project>
