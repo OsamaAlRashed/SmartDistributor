@@ -108,8 +108,6 @@ namespace SmartDistributor.Main.Data
         {
             try
             {
-                
-
                 var product = await Context.Products
                                     .Include(p => p.Category)
                                     .SingleOrDefaultAsync(p => p.Id == id);
@@ -153,6 +151,67 @@ namespace SmartDistributor.Main.Data
                                        })
                                        .ToListAsync();
             return sellers;
+        }
+
+        public async Task<List<ApiProductDto>> GetTopProducts(Guid CityId)
+        {
+            try
+            {
+                var products = await Context.Products
+                                            .Include(p => p.OrderItems)
+                                            .OrderByDescending(p => p.OrderItems.Count())
+                                            .Take(10)
+                                            .Select(p => new ApiProductDto
+                                            {
+                                                Id = p.Id,
+                                                CategoryId = p.CategoryId,
+                                                Height = p.Height,
+                                                Length = p.Length,
+                                                Weight = p.Weight,
+                                                Width = p.Width,
+                                            })
+                                            .ToListAsync();
+                return products;
+            }
+            catch (Exception)
+            {
+                return new List<ApiProductDto>();
+            }
+            
+        }
+
+        public async Task<List<ApiSellerDto>> GetTopSellers(Guid CityId)
+        {
+            try
+            {
+
+                var GeoLocations = await Context.Geolocations.ToListAsync();
+
+                Dictionary<int, Tuple<double, double, Guid>> GeoLocationsDic = new Dictionary<int, Tuple<double, double, Guid>>();
+
+                foreach (var geo in GeoLocations)
+                {
+                    GeoLocationsDic[geo.ZipCodePrefix] = new Tuple<double, double, Guid>(geo.Lat, geo.Lng, geo.CityId);
+                }
+
+                var Sellers = await Context.Sellers
+                                            .Include(p => p.OrderItems)
+                                            .OrderByDescending(p => p.OrderItems.Count())
+                                            .Take(10)
+                                            .Select(s => new ApiSellerDto
+                                            {
+                                                Id = s.Id,
+                                                Lat = GeoLocationsDic[s.ZipCodePrefix].Item1.ToString(),
+                                                Lng = GeoLocationsDic[s.ZipCodePrefix].Item2.ToString(),
+                                            })
+                                            .ToListAsync();
+                return Sellers;
+            }
+            catch (Exception)
+            {
+                return new List<ApiSellerDto>();
+            }
+
         }
 
         public async Task<List<ApiSellerDto>> PredicteSellers(int predction, Guid? cityId)

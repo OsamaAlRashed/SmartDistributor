@@ -72,18 +72,26 @@ namespace SmartDistributor.Main.Data
 
         public async Task<CountDto> GetCounts()
         {
-            return new CountDto
+            try
             {
-                CategoryCount = await Context.Categories.CountAsync(),
-                CityCount = await Context.Cities.CountAsync(),
-                StateCount = await Context.States.CountAsync(),
-                CustomerCount = await Context.Customers.CountAsync(),
-                GeoLocationCount = await Context.Geolocations.CountAsync(),
-                OrderCount = await Context.Orders.CountAsync(),
-                OrderItemCount = await Context.OrderItems.CountAsync(),
-                ProductCount = await Context.Products.CountAsync(),
-                SellerCount = await Context.Sellers.CountAsync(),
-            };
+                return new CountDto
+                {
+                    CategoryCount = await Context.Categories.CountAsync(),
+                    CityCount = await Context.Cities.CountAsync(),
+                    StateCount = await Context.States.CountAsync(),
+                    CustomerCount = await Context.Customers.CountAsync(),
+                    GeoLocationCount = await Context.Geolocations.CountAsync(),
+                    OrderCount = await Context.Orders.CountAsync(),
+                    OrderItemCount = await Context.OrderItems.CountAsync(),
+                    ProductCount = await Context.Products.CountAsync(),
+                    SellerCount = await Context.Sellers.CountAsync(),
+                };
+            }
+            catch (Exception ex)
+            {
+                return new CountDto();
+            }
+            
         }
 
         public async Task<object> GetProAndCatInState()

@@ -15,6 +15,8 @@ namespace SmartDistributor.Main.Idata
         Task<List<ApiSellerDto>> GetSellers(List<Guid> guids);
         Task<List<ApiCityDto>> GetCities(Guid? cityId);
         Task<List<CategoryDto>> GetCategories(Guid? catId);
+        Task<List<ApiProductDto>> GetTopProducts(Guid CityId);
+        Task<List<ApiSellerDto>> GetTopSellers(Guid CityId);
 
     }
 }

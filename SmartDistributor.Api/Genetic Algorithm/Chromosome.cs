@@ -7,55 +7,24 @@ namespace SmartDistributor.Api.Genetic_Algorithm
 {
     public class Chromosome
     {
-        // The cost for the fitness of the chromosome
+        // التكلفة
         protected double cost;
-        Random randObj = new Random();
-
-        // The list of Sellers which are the genes of the chromosome
+        // جينات الكروموزوم
         protected int[] SellerList;
-        // The mutation rate at percentage.
+        // احتمال حدوث الطفرة
         protected double mutationPercent;
-        // crossover point.
+        // crossover نقطة
         protected int crossoverPoint;
-        public Chromosome(Seller[] Sellers)
-        {
-            bool[] taken = new bool[Sellers.Length];
-            SellerList = new int[Sellers.Length];
-            cost = 0.0;
-            for (int i = 0; i < SellerList.Length; i++) taken[i] = false;
-            for (int i = 0; i < SellerList.Length - 1; i++)
-            {
-                int icandidate;
-                do
-                {
-                    icandidate = (int)(randObj.NextDouble() * (double)SellerList.Length);
-                } while (taken[icandidate]);
-                SellerList[i] = icandidate;
-                taken[icandidate] = true;
-                if (i == SellerList.Length - 2)
-                {
-                    icandidate = 0;
-                    while (taken[icandidate]) icandidate++;
-                    SellerList[i + 1] = icandidate;
-                }
-            }
-            calculateCost(Sellers);
-            crossoverPoint = 1;
-        }
 
-        public void calculateCost(Seller[] Sellers)
-        {
-            cost = 0;
-            for (int i = 0; i < SellerList.Length - 1; i++)
-            {
-                double dist = Sellers[SellerList[i]].proximity(Sellers[SellerList[i + 1]]);
-                cost += dist;
-            }
-        }
-
+        Random randObj = new Random();
         public double getCost()
         {
             return cost;
+        }
+
+        public void setCost(double cost)
+        {
+            this.cost = cost;
         }
 
         public int getSeller(int i)
@@ -63,32 +32,57 @@ namespace SmartDistributor.Api.Genetic_Algorithm
             return SellerList[i];
         }
 
-        public void assignSellers(int[] list)
+        // تهيئة الكروموزوم
+        public Chromosome(Seller[] Sellers , Seller startPoint)
         {
+            bool[] taken = new bool[Sellers.Length];
+            SellerList = new int[Sellers.Length];
+            cost = 0.0;
             for (int i = 0; i < SellerList.Length; i++)
             {
-                SellerList[i] = list[i];
+                taken[i] = false;
+            }
+            for (int i = 0; i < SellerList.Length - 1; i++)
+            {
+                int icandidate;
+                // اختيار جين غير مكرر
+                do
+                {
+                    icandidate = (int)(randObj.NextDouble() * (double)SellerList.Length);
+                } while (taken[icandidate]);
+                SellerList[i] = icandidate;
+                taken[icandidate] = true;
+                // إعطاء  آخر جين الرمز المتبقي
+                if (i == SellerList.Length - 2)
+                {
+                    icandidate = 0;
+                    while (taken[icandidate]) icandidate++;
+                    SellerList[i + 1] = icandidate;
+                }
+            }
+            calculateCost(Sellers , startPoint);
+            crossoverPoint = 1;
+        }
+
+        // حساب التكلفة
+        public void calculateCost(Seller[] Sellers , Seller startPoint)
+        {
+            cost = 0;
+            cost += startPoint.proximity(Sellers[SellerList[0]]);
+            for (int i = 0; i < SellerList.Length - 1; i++)
+            {
+                double dist = Sellers[SellerList[i]].proximity(Sellers[SellerList[i + 1]]);
+                cost += dist;
             }
         }
 
-        public void assignSeller(int index, int value)
-        {
-            SellerList[index] = value;
-        }
-
-        public void assignCut(int cut)
-        {
-            crossoverPoint = cut;
-        }
-
-        public void assignMutation(double prob)
-        {
-            mutationPercent = prob;
-        }
-
+        
+        // عملية التصالب
         public int mate(Chromosome father, Chromosome offspring1, Chromosome offspring2)
         {
+            //نقطة البداية
             int crossoverPostion1 = (int)((randObj.NextDouble()) * (double)(SellerList.Length - crossoverPoint));
+            // نقطة النهاية
             int crossoverPostion2 = crossoverPostion1 + crossoverPoint;
 
             int[] offset1 = new int[SellerList.Length];
@@ -104,6 +98,7 @@ namespace SmartDistributor.Api.Genetic_Algorithm
 
             for (int i = 0; i < SellerList.Length; i++)
             {
+                // الجينات خارج مجال التصالب
                 if (i < crossoverPostion1 || i >= crossoverPostion2)
                 {
                     offset1[i] = -1;
@@ -188,6 +183,8 @@ namespace SmartDistributor.Api.Genetic_Algorithm
             int swapPoint1 = 0;
             int swapPoint2 = 0;
 
+
+            // طفرة
             if (randObj.NextDouble() < mutationPercent)
             {
                 swapPoint1 = (int)(randObj.NextDouble() * (double)(SellerList.Length));
@@ -197,7 +194,6 @@ namespace SmartDistributor.Api.Genetic_Algorithm
                 offset1[swapPoint2] = i;
                 mutate++;
             }
-
             if (randObj.NextDouble() < mutationPercent)
             {
                 swapPoint1 = (int)(randObj.NextDouble() * (double)(SellerList.Length));
@@ -211,11 +207,14 @@ namespace SmartDistributor.Api.Genetic_Algorithm
             return mutate;
         }
 
+
+        // إرجاع متجر
         public Tuple<Guid , double, double> ReturnSeller(int i, Seller[] Sellers)
         {
             return new Tuple<Guid , double, double>(Sellers[SellerList[i]].getId(), Sellers[SellerList[i]].getx(), Sellers[SellerList[i]].gety());
         }
          
+        // ترتيب الكروموزومات حسب الأفضل
         public static void sortChromosomes(Chromosome[] chromosomes, int num)
         {
             bool swapped = true;
@@ -235,5 +234,32 @@ namespace SmartDistributor.Api.Genetic_Algorithm
                 }
             }
         }
+
+        #region assign 
+        public void assignSellers(int[] list)
+        {
+            for (int i = 0; i < SellerList.Length; i++)
+            {
+                SellerList[i] = list[i];
+            }
+        }
+
+        public void assignSeller(int index, int value)
+        {
+            SellerList[index] = value;
+        }
+
+        public void assignCut(int cut)
+        {
+            crossoverPoint = cut;
+        }
+
+        public void assignMutation(double prob)
+        {
+            mutationPercent = prob;
+        }
+
+        #endregion
+
     }
 }

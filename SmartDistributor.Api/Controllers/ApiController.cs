@@ -18,15 +18,17 @@ namespace SmartDistributor.Api.Controllers
     public class ApiController : ControllerBase
     {
         private readonly IApiRepository apiRepository;
+        private readonly IStatisticsRepository statisticsRepository;
         private readonly InferenceSession session;
 
-        public ApiController(IApiRepository apiRepository, InferenceSession session)
+        public ApiController(IApiRepository apiRepository , IStatisticsRepository statisticsRepository , InferenceSession session)
         {
             this.apiRepository = apiRepository;
+            this.statisticsRepository = statisticsRepository;
             this.session = session;
         }
 
-        [HttpGet]
+        [HttpPost]
         public async Task<IActionResult> PredicteSellers(List<Guid> ProductIds, Guid? CityId)
         {
             var Sellers = new List<ApiSellerDto>();
@@ -44,16 +46,17 @@ namespace SmartDistributor.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> GetBestPath(SellersPointDto sellersPoint)
         {
-
             var Sellers = await apiRepository.GetSellers(sellersPoint.Ids);
 
             var position = Sellers.Select(s => new Tuple<Guid , double, double>
                                                (s.Id , Double.Parse(s.Lat), Double.Parse(s.Lng)))
                                   .ToList();
 
+            var startPoint = new Tuple<Guid, double, double>(Guid.NewGuid(), Double.Parse(sellersPoint.Lat), Double.Parse(sellersPoint.Lng));
+
             GA_TSP tsp = new GA_TSP();
 
-            tsp.Initialization(position);
+            tsp.Initialization(position , startPoint);
 
             var orderedPosition = tsp.TSPCompute();
 
@@ -93,9 +96,30 @@ namespace SmartDistributor.Api.Controllers
             return Ok(products);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetTopProducts(Guid CityId)
+        {
+            var products = await apiRepository.GetTopProducts(CityId);
+            return Ok(products);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTopSellers(Guid CityId)
+        {
+            var products = await apiRepository.GetTopSellers(CityId);
+            return Ok(products);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCounts()
+        {
+            var products = await statisticsRepository.GetCounts();
+            return Ok(products);
+        }
+
         private int Prediction(ApiProductDto product)
         {
-            int[] dimensions = new int[] { 1, 4 };
+            int[] dimensions = new int[] { 1 , 4 };
             int[] Inputs = new int[]
             {
                 product.CategoryNumber , product.Height , product.Length , product.Width
